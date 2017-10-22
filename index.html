@@ -30,126 +30,161 @@ Phasellus purus augue, pulvinar eget erat lobortis, pulvinar vehicula magna. Dui
 dignissim magna, a scelerisque lorem. Maecenas turpis felis, cursus vel hendrerit et, 
 commodo feugiat ipsum. Nunc iaculis turpis et mi aliquam posuere.
 </p>
-<h2>Median Gross Rent as a Percentage of Household Income</h2>
+<h2>Least Affordable Metropolitan Areas</h2>
 <div id="least_affordable"></div>
+<h2>Most Affordable Metropolitan Areas</h2>
 <div id="most_affordable"></div>
+<h2>
 <div id="top_cities"></div>
 <div id="source">
 <p>SOURCE: US CENSUS BUREAU</p>
 </div>
 </body>
 </html>
-<!-- <script>
-var width1 = 900;
-var height1 = 500;
-
-var svg1 = d3.select("#line").append("svg")
-.attr("height", height1)
-.attr("width", width1);
-
-function parseLine (row) {
-	return {
-		city: String(row["Geo_QName"]).split('-')[0].split('(')[0],
-		percentage: Number(row["SE_T105_001"]).toFixed(1),
-		score: Number(row["SE_T148_001"])
-	};
-}
-
-d3.csv("data.csv", parseLine, function (error, data) {
-	console.log(data);
-
-	var minX = d3.min(data, function (d) { return d.percentage; });
-	var maxX = d3.max(data, function (d) { return d.percentage; });
-
-	var minY = d3.min(data, function (d) { return d.score; });
-	var maxY = d3.max(data, function (d) { return d.score; });
-
-	var xScale1 = d3.scaleLinear().domain([minX, maxX]).range([5, width1 - 5]);
-	var yScale1 = d3.scaleLinear().domain([maxY, minY]).range([5, height1 - 5]);
-
-	data.forEach(function (d) {
-		svg1.append("circle")
-		.attr("cx", xScale1(d.percentage))
-		.attr("cy", yScale1(d.score))
-		.attr("r", 2)
-		.style("fill", "#ffffff");
-
-		// svg1.append("text")
-		// .attr("x", xScale1(d.percentage))
-		// .attr("y", yScale1(d.score))
-		// .text(d.city);
-	});
-
-	var scores = [];
-
-	data.forEach(function (d) {
-		scores.push(d.score);
-	})
-
-	medianScore = d3.median(scores);
-	console.log(medianScore);
-
-	// svg1.append("line")
-	// .attr("x1", 0)
-	// .attr("y1", yScale1(medianScore))
-	// .attr("x2", width1)
-	// .attr("y2", yScale1(medianScore))
-	// .style("stroke", "#ffffff")
-	// .style("stroke-width", 2);
-});
-
-</script> -->
 <script>
 var cities = [84493, 18748, 9298, 47854, 32167, 56602];
 
 function parseLine (row) {
 	return {
-		city: String(row["Geo_QName"]).split('-')[0].split(',')[0],
+		city: String(row["Geo_QName"]),
 		percentage: Number(row["SE_T105_001"]).toFixed(1),
 		population: Number(row["SE_T001_001"])
 	};
 }
 
 d3.csv("data.csv", parseLine, function (error, data) {
-	data.sort(function (a, b) { return d3.descending(a.percentage, b.percentage); });
+	data.forEach(function (d, i) {
+		if (d.city.indexOf("Puerto Rico") >= 0)
+			data.splice(i, 1);
+	});
 
-	console.log(data);
+	data.sort(function (a, b) { return d3.descending(a.percentage, b.percentage); });
+	var leastAffordable = data.slice(0, 25);
+	var mostAffordable = data.slice(data.length - 25);
 
 	data.sort(function (a, b) { return d3.descending(a.population, b.population); });
-
 	var topCities = data.slice(0, 25);
-
 	topCities.sort(function (a, b) { return d3.descending(a.percentage, b.percentage); });
 
 	var barHeight = 30;
 	var barSpacing = 30;
 	var rightPadding = 150;
 	var width = 900;
-	var height = topCities.length * (barHeight + barSpacing);
+	var leastAffordableHeight = leastAffordable.length * (barHeight + barSpacing);
+	var mostAffordableHeight = mostAffordable.length * (barHeight + barSpacing);
+	var topCitiesHeight = topCities.length * (barHeight + barSpacing);
 	var strokeWidth = 4;
 
-	var topCitiesSvg = d3.select("#top_cities").append("svg")
-	.attr("height", height)
+	var leastAffordableSvg = d3.select("#least_affordable").append("svg")
+	.attr("height", leastAffordableHeight)
 	.attr("width", width);
+
+	var mostAffordableSvg = d3.select("#most_affordable").append("svg")
+	.attr("height", mostAffordableHeight)
+	.attr("width", width);
+
+	var topCitiesSvg = d3.select("#top_cities").append("svg")
+	.attr("height", topCitiesHeight)
+	.attr("width", width);
+
+	leastAffordableSvg.append("line")
+	.attr("x1", strokeWidth / 2)
+	.attr("y1", 0)
+	.attr("x2", strokeWidth / 2)
+	.attr("y2", topCitiesHeight - barSpacing / 2)
+	.style("stroke", "#ffffff")
+	.style("stroke-width", strokeWidth);
+
+	mostAffordableSvg.append("line")
+	.attr("x1", strokeWidth / 2)
+	.attr("y1", 0)
+	.attr("x2", strokeWidth / 2)
+	.attr("y2", topCitiesHeight - barSpacing / 2)
+	.style("stroke", "#ffffff")
+	.style("stroke-width", strokeWidth);
 
 	topCitiesSvg.append("line")
 	.attr("x1", strokeWidth / 2)
 	.attr("y1", 0)
 	.attr("x2", strokeWidth / 2)
-	.attr("y2", height - barSpacing / 2)
+	.attr("y2", topCitiesHeight - barSpacing / 2)
 	.style("stroke", "#ffffff")
 	.style("stroke-width", strokeWidth);
 
-	var min = d3.min(data, function (d) { return d.percentage; });
-	var max = d3.max(data, function (d) { return d.percentage; });
+	var min = mostAffordable[mostAffordable.length - 1].percentage;
+	var max = leastAffordable[0].percentage;
 
 	var xScale = d3.scaleLinear().domain([min - 0.5, max]).range([width, rightPadding + strokeWidth / 2]);
-	var yScale = d3.scaleLinear().domain([0, topCities.length]).range([45 + strokeWidth / 2, height]);
+
+	var yScaleLeastAffordable = d3.scaleLinear().domain([0, leastAffordable.length])
+		.range([45 + strokeWidth / 2, leastAffordableHeight]);
+	var yScaleMostAffordable = d3.scaleLinear().domain([0, mostAffordable.length])
+		.range([45 + strokeWidth / 2, mostAffordableHeight])
+	var yScaleTopCities = d3.scaleLinear().domain([0, topCities.length]).range([45 +
+		strokeWidth / 2, topCitiesHeight]);
+
+	leastAffordable.forEach(function (d, i) {
+		leastAffordableSvg.append("rect")
+		.attr("x", 0)
+		.attr("y", yScaleLeastAffordable(i) - 15)
+		.attr("width", width - xScale(d.percentage))
+		.attr("height", barHeight)
+		.style("fill", "none")
+		.style("stroke", "#ffffff")
+		.style("stroke-width", strokeWidth)
+		.style("cursor", "pointer")
+		.on("mouseenter", function () {
+			d3.select(this)
+			.style("fill", "#ffffff");
+		})
+		.on("mouseleave", function () {
+			d3.select(this)
+			.style("fill", "none");
+		});
+
+		leastAffordableSvg.append("text")
+		.attr("x", width - xScale(d.percentage) + 10)
+		.attr("y", yScaleLeastAffordable(i))
+		.attr("alignment-baseline", "middle")
+		.attr("text-anchor", "start")
+		.style("font-family", "'Lato', sans-serif")
+		.style("fill", "#ffffff")
+		.text(d.city.split('-')[0].split(',')[0] + " " + d.percentage + "%");
+	});
+
+	mostAffordable.forEach(function (d, i) {
+		mostAffordableSvg.append("rect")
+		.attr("x", 0)
+		.attr("y", yScaleMostAffordable(i) - 15)
+		.attr("width", width - xScale(d.percentage))
+		.attr("height", barHeight)
+		.style("fill", "none")
+		.style("stroke", "#ffffff")
+		.style("stroke-width", strokeWidth)
+		.style("cursor", "pointer")
+		.on("mouseenter", function () {
+			d3.select(this)
+			.style("fill", "#ffffff");
+		})
+		.on("mouseleave", function () {
+			d3.select(this)
+			.style("fill", "none");
+		});
+
+		mostAffordableSvg.append("text")
+		.attr("x", width - xScale(d.percentage) + 10)
+		.attr("y", yScaleMostAffordable(i))
+		.attr("alignment-baseline", "middle")
+		.attr("text-anchor", "start")
+		.style("font-family", "'Lato', sans-serif")
+		.style("fill", "#ffffff")
+		.text(d.city.split('-')[0].split(',')[0] + " " + d.percentage + "%");
+	});
 
 	topCities.forEach(function (d, i) {
 		topCitiesSvg.append("rect")
 		.attr("x", 0)
-		.attr("y", yScale(i) - 15)
+		.attr("y", yScaleTopCities(i) - 15)
 		.attr("width", width - xScale(d.percentage))
 		.attr("height", barHeight)
 		.style("fill", "none")
@@ -167,12 +202,12 @@ d3.csv("data.csv", parseLine, function (error, data) {
 
 		topCitiesSvg.append("text")
 		.attr("x", width - xScale(d.percentage) + 10)
-		.attr("y", yScale(i))
+		.attr("y", yScaleTopCities(i))
 		.attr("alignment-baseline", "middle")
 		.attr("text-anchor", "start")
 		.style("font-family", "'Lato', sans-serif")
 		.style("fill", "#ffffff")
-		.text(d.city + " " + d.percentage + "%");
+		.text(d.city.split('-')[0].split(',')[0] + " " + d.percentage + "%");
 	});
 });
 
