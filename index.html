@@ -7,13 +7,14 @@
 <link href="https://fonts.googleapis.com/css?family=Lato:400,900" rel="stylesheet">
 <style>
 body { width: 900px; margin: auto; font-family: "Lato", sans-serif; color: #ffffff; background-color: #23ceea; }
-h1 { font-family: "Lato", serif; font-size: 56px; font-weight: bold; text-align: center; padding-top: 10px; color: #ffffff; }
+h1 { font-family: "Lato", serif; font-size: 56px; font-weight: bold; text-align: left; padding-top: 50px; color: #ffffff; }
 p { line-height: 22px; }
 svg { display: block; margin: auto; }
 #plot { padding-bottom: 50px; }
 #source { font-size: 12px; text-align: left; }
 ::selection {
-	background: #faff00;
+	color: #23ceea;
+	background: #ffffff;
 }
 </style>
 </head>
@@ -29,51 +30,128 @@ Phasellus purus augue, pulvinar eget erat lobortis, pulvinar vehicula magna. Dui
 dignissim magna, a scelerisque lorem. Maecenas turpis felis, cursus vel hendrerit et, 
 commodo feugiat ipsum. Nunc iaculis turpis et mi aliquam posuere.
 </p>
-<div id="plot"></div>
+<h2>Median Gross Rent as a Percentage of Household Income</h2>
+<div id="least_affordable"></div>
+<div id="most_affordable"></div>
+<div id="top_cities"></div>
 <div id="source">
 <p>SOURCE: US CENSUS BUREAU</p>
 </div>
 </body>
 </html>
-<script>
-var width = 900;
-var height = 26220;
-var strokeWidth = 4;
+<!-- <script>
+var width1 = 900;
+var height1 = 500;
 
-var svg = d3.select("#plot").append("svg")
-.attr("height", height)
-.attr("width", width);
-
-svg.append("line")
-.attr("x1", strokeWidth / 2)
-.attr("y1", 0)
-.attr("x2", strokeWidth / 2)
-.attr("y2", height)
-.style("stroke", "#ffffff")
-.style("stroke-width", strokeWidth);
+var svg1 = d3.select("#line").append("svg")
+.attr("height", height1)
+.attr("width", width1);
 
 function parseLine (row) {
 	return {
 		city: String(row["Geo_QName"]).split('-')[0].split('(')[0],
-		percentage: Number(row["SE_T105_001"]).toFixed(1)
+		percentage: Number(row["SE_T105_001"]).toFixed(1),
+		score: Number(row["SE_T148_001"])
 	};
 }
 
 d3.csv("data.csv", parseLine, function (error, data) {
-	data.sort(function (a, b) { return d3.descending(a["percentage"], b["percentage"]); });
+	console.log(data);
+
+	var minX = d3.min(data, function (d) { return d.percentage; });
+	var maxX = d3.max(data, function (d) { return d.percentage; });
+
+	var minY = d3.min(data, function (d) { return d.score; });
+	var maxY = d3.max(data, function (d) { return d.score; });
+
+	var xScale1 = d3.scaleLinear().domain([minX, maxX]).range([5, width1 - 5]);
+	var yScale1 = d3.scaleLinear().domain([maxY, minY]).range([5, height1 - 5]);
+
+	data.forEach(function (d) {
+		svg1.append("circle")
+		.attr("cx", xScale1(d.percentage))
+		.attr("cy", yScale1(d.score))
+		.attr("r", 2)
+		.style("fill", "#ffffff");
+
+		// svg1.append("text")
+		// .attr("x", xScale1(d.percentage))
+		// .attr("y", yScale1(d.score))
+		// .text(d.city);
+	});
+
+	var scores = [];
+
+	data.forEach(function (d) {
+		scores.push(d.score);
+	})
+
+	medianScore = d3.median(scores);
+	console.log(medianScore);
+
+	// svg1.append("line")
+	// .attr("x1", 0)
+	// .attr("y1", yScale1(medianScore))
+	// .attr("x2", width1)
+	// .attr("y2", yScale1(medianScore))
+	// .style("stroke", "#ffffff")
+	// .style("stroke-width", 2);
+});
+
+</script> -->
+<script>
+var cities = [84493, 18748, 9298, 47854, 32167, 56602];
+
+function parseLine (row) {
+	return {
+		city: String(row["Geo_QName"]).split('-')[0].split(',')[0],
+		percentage: Number(row["SE_T105_001"]).toFixed(1),
+		population: Number(row["SE_T001_001"])
+	};
+}
+
+d3.csv("data.csv", parseLine, function (error, data) {
+	data.sort(function (a, b) { return d3.descending(a.percentage, b.percentage); });
+
+	console.log(data);
+
+	data.sort(function (a, b) { return d3.descending(a.population, b.population); });
+
+	var topCities = data.slice(0, 25);
+
+	topCities.sort(function (a, b) { return d3.descending(a.percentage, b.percentage); });
+
+	var barHeight = 30;
+	var barSpacing = 30;
+	var rightPadding = 150;
+	var width = 900;
+	var height = topCities.length * (barHeight + barSpacing);
+	var strokeWidth = 4;
+
+	var topCitiesSvg = d3.select("#top_cities").append("svg")
+	.attr("height", height)
+	.attr("width", width);
+
+	topCitiesSvg.append("line")
+	.attr("x1", strokeWidth / 2)
+	.attr("y1", 0)
+	.attr("x2", strokeWidth / 2)
+	.attr("y2", height - barSpacing / 2)
+	.style("stroke", "#ffffff")
+	.style("stroke-width", strokeWidth);
 
 	var min = d3.min(data, function (d) { return d.percentage; });
 	var max = d3.max(data, function (d) { return d.percentage; });
 
-	var xScale = d3.scaleLinear().domain([min - 0.5, max]).range([width, 150 + strokeWidth / 2]);
-	var yScale = d3.scaleLinear().domain([0, data.length]).range([45 + strokeWidth / 2, height]);
+	var xScale = d3.scaleLinear().domain([min - 0.5, max]).range([width, rightPadding + strokeWidth / 2]);
+	var yScale = d3.scaleLinear().domain([0, topCities.length]).range([45 + strokeWidth / 2, height]);
 
-	data.forEach(function (d, i) {
-		svg.append("rect")
+	topCities.forEach(function (d, i) {
+		topCitiesSvg.append("rect")
 		.attr("x", 0)
 		.attr("y", yScale(i) - 15)
 		.attr("width", width - xScale(d.percentage))
-		.attr("height", 30)
+		.attr("height", barHeight)
 		.style("fill", "none")
 		.style("stroke", "#ffffff")
 		.style("stroke-width", strokeWidth)
@@ -87,7 +165,7 @@ d3.csv("data.csv", parseLine, function (error, data) {
 			.style("fill", "none");
 		});
 
-		svg.append("text")
+		topCitiesSvg.append("text")
 		.attr("x", width - xScale(d.percentage) + 10)
 		.attr("y", yScale(i))
 		.attr("alignment-baseline", "middle")
