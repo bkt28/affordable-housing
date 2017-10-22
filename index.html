@@ -48,6 +48,7 @@ var cities = [84493, 18748, 9298, 47854, 32167, 56602];
 function parseLine (row) {
 	return {
 		city: String(row["Geo_QName"]),
+		state: String(row["Geo_STUSAB"]),
 		percentage: Number(row["SE_T105_001"]).toFixed(1),
 		population: Number(row["SE_T001_001"])
 	};
@@ -150,7 +151,7 @@ d3.csv("data.csv", parseLine, function (error, data) {
 		.attr("text-anchor", "start")
 		.style("font-family", "'Lato', sans-serif")
 		.style("fill", "#ffffff")
-		.text(d.city.split('-')[0].split(',')[0] + " " + d.percentage + "%");
+		.text(d.city.split('-')[0].split(',')[0] + ", " + d.state.toUpperCase() + " " + d.percentage + "%");
 	});
 
 	mostAffordable.forEach(function (d, i) {
@@ -179,7 +180,7 @@ d3.csv("data.csv", parseLine, function (error, data) {
 		.attr("text-anchor", "start")
 		.style("font-family", "'Lato', sans-serif")
 		.style("fill", "#ffffff")
-		.text(d.city.split('-')[0].split(',')[0] + " " + d.percentage + "%");
+		.text(d.city.split('-')[0].split(',')[0] + ", " + d.state.toUpperCase() + " " + d.percentage + "%");
 	});
 
 	topCities.forEach(function (d, i) {
